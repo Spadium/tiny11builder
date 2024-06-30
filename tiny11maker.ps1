@@ -1,6 +1,10 @@
 # Enable debugging
 #Set-PSDebug -Trace 1
 
+param(
+    [string] $ScratchDisk
+)
+
 # Check if PowerShell execution is restricted
 if ((Get-ExecutionPolicy) -eq 'Restricted') {
     Write-Host "Your current PowerShell Execution Policy is set to Restricted, which prevents scripts from running. Do you want to change it to RemoteSigned? (yes/no)"
@@ -26,7 +30,6 @@ if (! $myWindowsPrincipal.IsInRole($adminRole))
     exit
 }
 
-param ($ScratchDisk)
 if ($Null -eq $ScratchDisk) {
     $ScratchDisk = $env:SystemDrive
 }
@@ -367,7 +370,6 @@ Write-Host 'Deleting QueueReporting'
 reg delete "HKEY_LOCAL_MACHINE\zSOFTWARE\Microsoft\Windows NT\CurrentVersion\Schedule\TaskCache\Tasks\{E3176A65-4E44-4ED3-AA73-3283660ACB9C}" /f >$null
 Write-Host "Tweaking complete!"
 Write-Host "Unmounting Registry..."
-$regKey.Close()
 reg unload HKLM\zCOMPONENTS >$null
 reg unload HKLM\zDRIVERS >$null
 reg unload HKLM\zDEFAULT >$null
@@ -409,11 +411,9 @@ Write-Host "Bypassing system requirements(on the setup image):"
 & 'reg' 'add' 'HKLM\zSYSTEM\Setup\MoSetup' '/v' 'AllowUpgradesWithUnsupportedTPMOrCPU' '/t' 'REG_DWORD' '/d' '1' '/f' >$null
 Write-Host "Tweaking complete!"
 Write-Host "Unmounting Registry..."
-$regKey.Close()
 reg unload HKLM\zCOMPONENTS >$null
 reg unload HKLM\zDEFAULT >$null
 reg unload HKLM\zNTUSER >$null
-$regKey.Close()
 reg unload HKLM\zSOFTWARE >$null
 reg unload HKLM\zSYSTEM >$null
 Write-Host "Unmounting image..."
@@ -424,7 +424,7 @@ Write-Host "Copying unattended file for bypassing MS account on OOBE..."
 Copy-Item -Path "$PSScriptRoot\autounattend.xml" -Destination "$ScratchDisk\tiny11\autounattend.xml" -Force >$null
 if ((Test-Path "$PSScriptRoot\`$OEM`$") -eq $true) {
     Write-Host "Copying OEM Folder..."
-    Copy-Item -Path "$PSScriptRoot\`$OEM`$" -Destination "$ScratchDisk\tiny11\sources\`$OEM`$" -Force > $null
+    Copy-Item -Path "$PSScriptRoot\`$OEM`$" -Destination "$ScratchDisk\tiny11\sources\`$OEM`$" -Recurse -Force > $null
 }
 Write-Host "Creating ISO image..."
 $ADKDepTools = "C:\Program Files (x86)\Windows Kits\10\Assessment and Deployment Kit\Deployment Tools\$hostarchitecture\Oscdimg"
